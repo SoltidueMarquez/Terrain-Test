@@ -37,10 +37,11 @@ public class TerrainTextureLayer
 [System.Serializable]
 public class Plant
 {
-    public GameObject prefab; // 植物预设
-    public Vector2 area;      // 生成范围（0到1之间的比例）
-    public int density;       // 每平方单位面积的植物数量
-    public Vector2 widthScaleRange;  // 宽度缩放比例范围
-    public Vector2 heightScaleRange; // 高度缩放比例范围
+    public GameObject prefab;         // 植物预设
+    public Vector3[] area;            // 多个圆形区域，使用多个Vector3表示（x, y为圆心坐标，z为半径）
+    public Vector2 elevationRange;    // 海拔比例范围（最小比例到最大比例）
+    public float density;               // 每单位面积的植物密度
+    public Vector2 widthScaleRange;   // 宽度缩放比例范围
+    public Vector2 heightScaleRange;  // 高度缩放比例范围
 }
 
