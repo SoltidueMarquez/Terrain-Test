@@ -30,6 +30,11 @@ MonoBehaviour:
     tileSize: {x: 20, y: 20}
     minBlend: 0.2
     maxBlend: 0.7
-  treeCount: 100
-  treeArea: {x: 0.2, y: 0.8}
+  plants:
+  - prefab: {fileID: 5832789886011691547, guid: af4cb9fbbb9b1c942b1f28720f064f11,
+      type: 3}
+    area: {x: 0.2, y: 0.8}
+    density: 5
+    widthScaleRange: {x: 0.5, y: 1.5}
+    heightScaleRange: {x: 0.5, y: 1.5}
   grassDensity: 5

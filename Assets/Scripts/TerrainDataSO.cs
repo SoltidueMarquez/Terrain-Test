@@ -18,9 +18,8 @@ public class TerrainDataSo : ScriptableObject
     [Header("地形纹理参数")]
     public TerrainTextureLayer[] textureLayers;
     
-    [Header("树木和植物参数")]
-    [Tooltip("树木数量")] public int treeCount = 100;
-    [Tooltip("树木生成范围")] public Vector2 treeArea = new Vector2(0.2f, 0.8f);
+    [Header("植物参数")]
+    public Plant[] plants;
     [Tooltip("草密度")] public int grassDensity = 5;
 
 }
@@ -34,3 +33,14 @@ public class TerrainTextureLayer
     public float minBlend;           // 最小混合比例
     public float maxBlend;           // 最大混合比例
 }
+
+[System.Serializable]
+public class Plant
+{
+    public GameObject prefab; // 植物预设
+    public Vector2 area;      // 生成范围（0到1之间的比例）
+    public int density;       // 每平方单位面积的植物数量
+    public Vector2 widthScaleRange;  // 宽度缩放比例范围
+    public Vector2 heightScaleRange; // 高度缩放比例范围
+}
+

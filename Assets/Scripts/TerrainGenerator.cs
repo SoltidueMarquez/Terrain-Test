@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -125,50 +126,58 @@ public class TerrainGenerator : MonoBehaviour
 
     private void SetPlants(TerrainData terrainData)
     {
-        TreePrototype[] prototypes = new TreePrototype[1];
-        TreePrototype treePrototype = new TreePrototype
+        List<TreePrototype> treePrototypes = new List<TreePrototype>();
+        foreach (var plant in terrainDataSo.plants)
         {
-            prefab = Resources.Load<GameObject>("Trees/OakTree")
-        };
-        prototypes[0] = treePrototype;
-
-        terrainData.treePrototypes = prototypes;
-
-        if (treePrototype.prefab == null)
-        {
-            Debug.LogError("Tree prefab not found! Ensure it exists.");
-            return;
-        }
-
-        // 随机生成树木
-        TreeInstance[] treeInstances = new TreeInstance[terrainDataSo.treeCount];
-        for (int i = 0; i < terrainDataSo.treeCount; i++)
-        {
-            float normalizedX = Random.Range(terrainDataSo.treeArea.x, terrainDataSo.treeArea.y);
-            float normalizedZ = Random.Range(terrainDataSo.treeArea.x, terrainDataSo.treeArea.y);
-
-            float terrainHeight = terrainData.GetHeight(
-                Mathf.FloorToInt(normalizedX * terrainData.heightmapResolution),
-                Mathf.FloorToInt(normalizedZ * terrainData.heightmapResolution)
-            );
-
-            float normalizedY = terrainHeight / terrainData.size.y;
-
-            TreeInstance treeInstance = new TreeInstance
+            TreePrototype prototype = new TreePrototype
             {
-                position = new Vector3(normalizedX, normalizedY, normalizedZ),
-                prototypeIndex = 0,
-                widthScale = Random.Range(0.8f, 1.2f),
-                heightScale = Random.Range(0.8f, 1.2f),
-                color = Color.white,
-                lightmapColor = Color.white
+                prefab = plant.prefab
             };
+            treePrototypes.Add(prototype);
+        }
+        terrainData.treePrototypes = treePrototypes.ToArray();
 
-            treeInstances[i] = treeInstance;
+        List<TreeInstance> treeInstances = new List<TreeInstance>();
+        for (int p = 0; p < terrainDataSo.plants.Length; p++)
+        {
+            Plant plant = terrainDataSo.plants[p];
+            float areaWidth = (plant.area.y - plant.area.x) * terrainData.size.x;
+            float areaHeight = (plant.area.y - plant.area.x) * terrainData.size.z;
+            int areaCount = Mathf.FloorToInt(areaWidth * areaHeight * plant.density * 0.01f);
+
+            for (int i = 0; i < areaCount; i++)
+            {
+                float normalizedX = Random.Range(plant.area.x, plant.area.y);
+                float normalizedZ = Random.Range(plant.area.x, plant.area.y);
+
+                float terrainHeight = terrainData.GetHeight(
+                    Mathf.FloorToInt(normalizedX * terrainData.heightmapResolution),
+                    Mathf.FloorToInt(normalizedZ * terrainData.heightmapResolution)
+                );
+
+                float normalizedY = terrainHeight / terrainData.size.y;
+
+                float widthScale = Random.Range(plant.widthScaleRange.x, plant.widthScaleRange.y);
+                float heightScale = Random.Range(plant.heightScaleRange.x, plant.heightScaleRange.y);
+
+                TreeInstance treeInstance = new TreeInstance
+                {
+                    position = new Vector3(normalizedX, normalizedY, normalizedZ),
+                    prototypeIndex = p,
+                    widthScale = widthScale,
+                    heightScale = heightScale,
+                    color = Color.white,
+                    lightmapColor = Color.white
+                };
+
+                treeInstances.Add(treeInstance);
+            }
         }
 
-        terrainData.treeInstances = treeInstances;
+        terrainData.treeInstances = treeInstances.ToArray();
     }
+
+
     
     private void SetProto(TerrainData terrainData)
     {
