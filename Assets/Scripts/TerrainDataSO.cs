@@ -25,16 +25,6 @@ public class TerrainDataSo : ScriptableObject
 }
 
 [System.Serializable]
-public class TerrainTextureLayer
-{
-    public string name;
-    public Texture2D diffuseTexture; // 纹理贴图
-    public Vector2 tileSize;         // 纹理平铺大小
-    public float minBlend;           // 最小混合比例
-    public float maxBlend;           // 最大混合比例
-}
-
-[System.Serializable]
 public class Plant
 {
     public GameObject prefab;         // 植物预设
@@ -43,5 +33,22 @@ public class Plant
     public float density;               // 每单位面积的植物密度
     public Vector2 widthScaleRange;   // 宽度缩放比例范围
     public Vector2 heightScaleRange;  // 高度缩放比例范围
+    public float minSlope;
+    public float maxSlope;
+}
+
+[System.Serializable]
+public class TerrainTextureLayer
+{
+    public Texture2D diffuseTexture;
+    public Vector2 tileSize;
+    public float minHeight;
+    public float maxHeight;
+    public float minSlope;
+    public float maxSlope;
+    public bool useNoise;
+    public float noiseScale;
+    public float minBlend;
+    public float maxBlend;
 }
 

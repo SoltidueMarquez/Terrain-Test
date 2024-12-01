@@ -24,8 +24,7 @@ public class TerrainGenerator : MonoBehaviour
         terrainData.SetDetailResolution(terrainDataSo.alphamapResolution, terrainDataSo.detailResolution);
         terrainData.size = terrainDataSo.dataSize;
     }
-
-
+    
     private void SetHeight(TerrainData terrainData)
     {
         float[,] heights = GeneratePerlinNoise(
@@ -66,62 +65,82 @@ public class TerrainGenerator : MonoBehaviour
     // terrainData.SetAlphamaps(x, y, alphaMaps)：设置纹理混合数据
     private void SetLayers(TerrainData terrainData)
     {
-        // 获取 TerrainDataSo 中的纹理层数量
         int layerCount = terrainDataSo.textureLayers.Length;
-
-        // 创建 TerrainLayer 数组
         TerrainLayer[] layers = new TerrainLayer[layerCount];
 
         for (int i = 0; i < layerCount; i++)
         {
-            // 在循环内定义 soLayer，绑定到当前的 textureLayers[i]
             TerrainTextureLayer soLayer = terrainDataSo.textureLayers[i];
-
-            // 创建 TerrainLayer 并设置参数
             TerrainLayer layer = new TerrainLayer
             {
                 diffuseTexture = soLayer.diffuseTexture,
                 tileSize = soLayer.tileSize
             };
-
             layers[i] = layer;
         }
 
-        // 应用纹理层到地形
         terrainData.terrainLayers = layers;
 
-        // 设置 Alpha Maps（控制纹理混合）
         int resolution = terrainData.alphamapResolution;
         float[,,] alphaMaps = new float[resolution, resolution, layerCount];
+
+        float[,] heights = terrainData.GetHeights(0, 0, resolution, resolution);
 
         for (int y = 0; y < resolution; y++)
         {
             for (int x = 0; x < resolution; x++)
             {
+                float height = heights[y, x];
                 float totalWeight = 0;
 
                 for (int layer = 0; layer < layerCount; layer++)
                 {
-                    // 重新绑定当前的 soLayer
                     TerrainTextureLayer currentLayer = terrainDataSo.textureLayers[layer];
+                    float weight = 0;
 
-                    // 使用 currentLayer 的混合参数
-                    float weight = Random.Range(currentLayer.minBlend, currentLayer.maxBlend);
-                    alphaMaps[y, x, layer] = weight;
-                    totalWeight += weight;
+                    // 基于高度分布
+                    if (height >= currentLayer.minHeight && height <= currentLayer.maxHeight)
+                    {
+                        weight = Mathf.InverseLerp(currentLayer.minHeight, currentLayer.maxHeight, height);
+                    }
+
+                    // 结合斜率分布（如果需要）
+                    float slope = CalculateSlope(terrainData, x, y);
+                    if (slope >= currentLayer.minSlope && slope <= currentLayer.maxSlope)
+                    {
+                        weight *= Mathf.InverseLerp(currentLayer.minSlope, currentLayer.maxSlope, slope);
+                    }
+
+                    // 加入噪声控制
+                    if (currentLayer.useNoise)
+                    {
+                        float noise = Mathf.PerlinNoise(x * currentLayer.noiseScale, y * currentLayer.noiseScale);
+                        weight *= noise;
+                    }
+
+                    // 应用 minBlend 和 maxBlend 限制
+                    float clampedWeight = Mathf.Clamp(weight, currentLayer.minBlend, currentLayer.maxBlend);
+                    alphaMaps[y, x, layer] = clampedWeight;
+                    totalWeight += clampedWeight;
                 }
-
-                // 归一化混合权重
+                
+                // 归一化权重
                 for (int layer = 0; layer < layerCount; layer++)
                 {
-                    alphaMaps[y, x, layer] /= totalWeight;
+                    alphaMaps[y, x, layer] /= totalWeight > 0 ? totalWeight : 1;
                 }
             }
         }
-
-        // 应用混合贴图
         terrainData.SetAlphamaps(0, 0, alphaMaps);
     }
+
+    // 计算斜率（角度）
+    private float CalculateSlope(TerrainData terrainData, int x, int y)
+    {
+        Vector3 normal = terrainData.GetInterpolatedNormal((float)x / terrainData.alphamapResolution, (float)y / terrainData.alphamapResolution);
+        return Vector3.Angle(normal, Vector3.up);
+    }
+
 
 
     private void SetPlants(TerrainData terrainData)
@@ -131,7 +150,7 @@ public class TerrainGenerator : MonoBehaviour
         {
             TreePrototype prototype = new TreePrototype
             {
-                prefab = plant.prefab
+                prefab = plant.prefab  // 使用植物的预设
             };
             treePrototypes.Add(prototype);
         }
@@ -139,6 +158,7 @@ public class TerrainGenerator : MonoBehaviour
 
         List<TreeInstance> treeInstances = new List<TreeInstance>();
 
+        // 为每种植物生成实例
         for (int p = 0; p < terrainDataSo.plants.Length; p++)
         {
             Plant plant = terrainDataSo.plants[p];
@@ -149,7 +169,6 @@ public class TerrainGenerator : MonoBehaviour
                 Vector2 center = new Vector2(area.x, area.y);  // 圆心坐标
                 float radius = area.z;                         // 半径
 
-                // 计算生成植物的网格数量
                 int areaCount = Mathf.FloorToInt(terrainData.size.x * terrainData.size.z * plant.density * 0.01f);
 
                 for (int i = 0; i < areaCount; i++)
@@ -175,21 +194,28 @@ public class TerrainGenerator : MonoBehaviour
                         // 判断海拔是否在指定范围内
                         if (normalizedY >= plant.elevationRange.x && normalizedY <= plant.elevationRange.y)
                         {
-                            // 如果符合条件，生成植物
-                            float widthScale = Random.Range(plant.widthScaleRange.x, plant.widthScaleRange.y);
-                            float heightScale = Random.Range(plant.heightScaleRange.x, plant.heightScaleRange.y);
+                            // 获取该点的坡度
+                            float slope = CalculateSlope(terrainData, Mathf.FloorToInt(normalizedX * terrainData.heightmapResolution), Mathf.FloorToInt(normalizedZ * terrainData.heightmapResolution));
 
-                            TreeInstance treeInstance = new TreeInstance
+                            // 检查该点的坡度是否在指定范围内
+                            if (slope >= plant.minSlope && slope <= plant.maxSlope)
                             {
-                                position = new Vector3(normalizedX, normalizedY, normalizedZ),
-                                prototypeIndex = p,
-                                widthScale = widthScale,
-                                heightScale = heightScale,
-                                color = Color.white,
-                                lightmapColor = Color.white
-                            };
+                                // 如果符合坡度要求，生成植物
+                                float widthScale = Random.Range(plant.widthScaleRange.x, plant.widthScaleRange.y);
+                                float heightScale = Random.Range(plant.heightScaleRange.x, plant.heightScaleRange.y);
 
-                            treeInstances.Add(treeInstance);
+                                TreeInstance treeInstance = new TreeInstance
+                                {
+                                    position = new Vector3(normalizedX, normalizedY, normalizedZ),
+                                    prototypeIndex = p,
+                                    widthScale = widthScale,
+                                    heightScale = heightScale,
+                                    color = Color.white,
+                                    lightmapColor = Color.white
+                                };
+
+                                treeInstances.Add(treeInstance);
+                            }
                         }
                     }
                 }
@@ -198,6 +224,8 @@ public class TerrainGenerator : MonoBehaviour
 
         terrainData.treeInstances = treeInstances.ToArray();
     }
+
+
     
     private void SetProto(TerrainData terrainData)
     {
