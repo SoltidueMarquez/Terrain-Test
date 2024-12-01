@@ -198,9 +198,6 @@ public class TerrainGenerator : MonoBehaviour
 
         terrainData.treeInstances = treeInstances.ToArray();
     }
-
-
-
     
     private void SetProto(TerrainData terrainData)
     {
