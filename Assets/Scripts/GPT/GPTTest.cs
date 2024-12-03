@@ -19,6 +19,7 @@ namespace GPT
         [SerializeField] private string currentModel = "";
 
         [SerializeField, Multiline] private string prompt = "";
+        [SerializeField] private string tips = "";
         [SerializeField] private KeyCode sendKey;
         
         private string result = string.Empty;

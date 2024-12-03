@@ -439,6 +439,7 @@ MonoBehaviour:
   apiKey: sk-8VlcEN66R8X97AGw40D57f81C3Ca4eB280C929740677A30f
   currentModel: gpt-4o
   prompt: "\u4F60\u597D"
+  tips: "(\u4EE4\u724C\u6682\u65F6\u7981\u7528\uFF0C\u4F7F\u7528\u65F6\u6253\u5F00)"
   sendKey: 97
 --- !u!1 &832575517
 GameObject:
