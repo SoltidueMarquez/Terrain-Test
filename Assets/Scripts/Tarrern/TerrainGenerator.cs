@@ -27,36 +27,37 @@ public class TerrainGenerator : MonoBehaviour
     
     private void SetHeight(TerrainData terrainData)
     {
-        float[,] heights = GeneratePerlinNoise(
+        var heights = GenerateTerrainNoise(
             terrainDataSo.heightmapResolution,
             terrainDataSo.heightmapResolution,
-            terrainDataSo.octaves,
-            terrainDataSo.persistence,
-            terrainDataSo.noiseScale
+            terrainDataSo
         );
         terrainData.SetHeights(0, 0, heights);
     }
-    private float[,] GeneratePerlinNoise(int width, int height, int octaves, float persistence, float scale)
+    private float[,] GenerateTerrainNoise(int width, int height, TerrainDataSo data)
     {
         float[,] heights = new float[width, height];
+
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                float noise = 0;
-                float amplitude = 1;
-                float frequency = 1;
-                for (int i = 0; i < octaves; i++)
+                float finalNoise = 0f;
+                foreach (NoiseLayer layer in data.noiseLayers)
                 {
-                    noise += Mathf.PerlinNoise(x * scale * frequency, y * scale * frequency) * amplitude;
-                    amplitude *= persistence;
-                    frequency *= 2;
+                    if (layer.enabled)
+                    {
+                        finalNoise += layer.Evaluate(x, y);
+                        finalNoise = Mathf.Clamp(finalNoise, 0f, 1f);//归一化
+                    }
                 }
-                heights[x, y] = noise;
+                heights[x, y] = finalNoise;
             }
         }
+        
         return heights;
     }
+
 
     // 设置地形纹理
     // terrainData.terrainLayers：控制地形的纹理层。

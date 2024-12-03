@@ -16,9 +16,19 @@ MonoBehaviour:
   alphamapResolution: 512
   detailResolution: 16
   dataSize: {x: 1000, y: 200, z: 1000}
-  noiseScale: 0.01
-  octaves: 4
-  persistence: 0.001
+  noiseLayers:
+  - enabled: 1
+    type: 0
+    scale: 0.003
+    persistence: 0.2
+    frequency: 1
+    octaves: 4
+  - enabled: 0
+    type: 0
+    scale: 0.001
+    persistence: 0.2
+    frequency: 1
+    octaves: 3
   textureLayers:
   - diffuseTexture: {fileID: 2800000, guid: ca67ac357a44e1041bd2bb8bb2c8b9cd, type: 3}
     tileSize: {x: 10, y: 10}
@@ -33,7 +43,7 @@ MonoBehaviour:
   - diffuseTexture: {fileID: 2800000, guid: 568d227254c2f1b4f9cfac0ef6875ca7, type: 3}
     tileSize: {x: 10, y: 10}
     minHeight: 0.3
-    maxHeight: 1
+    maxHeight: 2
     minSlope: 0
     maxSlope: 20
     useNoise: 0

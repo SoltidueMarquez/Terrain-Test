@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu]
@@ -10,11 +11,8 @@ public class TerrainDataSo : ScriptableObject
     [Tooltip("细节图块的分辨率")] public Vector3 dataSize = new Vector3(1000, 200, 1000);
 
     [Header("高度图/地形设置")]
-    [Tooltip("噪声缩放比例")] public float noiseScale = 0.01f;
-    [Tooltip("噪声层数")] public int octaves = 4;
-    [Tooltip("噪声衰减因子")] public float persistence = 0.5f;
-    // [Tooltip("噪声频率增长速率")] public float lacunarity = 2.0f;
-
+    public List<NoiseLayer> noiseLayers = new List<NoiseLayer>();
+    
     [Header("地形纹理参数")]
     public TerrainTextureLayer[] textureLayers;
     
@@ -50,5 +48,45 @@ public class TerrainTextureLayer
     public float noiseScale;
     public float minBlend;
     public float maxBlend;
+}
+
+[System.Serializable]
+public class NoiseLayer
+{
+    //public enum NoiseType { Perlin, Simplex, Voronoi }
+    public enum NoiseType { Perlin }
+    public bool enabled = true;
+    public NoiseType type;
+    public float scale = 1.0f;
+    public float persistence = 0.5f;
+    public float frequency = 1.0f;
+    public int octaves = 1;
+
+    public float Evaluate(float x, float y)
+    {
+        float noiseValue = 0f;
+        float amplitude = 1f;
+        float localFrequency = frequency;
+
+        for (int i = 0; i < octaves; i++)
+        {
+            switch (type)
+            {
+                case NoiseType.Perlin:
+                    noiseValue += Mathf.PerlinNoise(x * scale * localFrequency, y * scale * localFrequency) * amplitude;
+                    break;
+                //case NoiseType.Simplex:
+                    // Simplex noise implementation goes here
+                    break;
+                //case NoiseType.Voronoi:
+                    // Voronoi noise implementation goes here
+                    break;
+            }
+            amplitude *= persistence;
+            localFrequency *= 2;
+        }
+
+        return noiseValue;
+    }
 }
 
